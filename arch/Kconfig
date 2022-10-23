@@ -1,854 +1,751 @@
-#
-# General architecture dependent options
-#
-
-config KEXEC_CORE
+config ALPHA
 	bool
-
-config OPROFILE
-	tristate "OProfile system profiling"
-	depends on PROFILING
-	depends on HAVE_OPROFILE
-	select RING_BUFFER
-	select RING_BUFFER_ALLOW_SWAP
-	help
-	  OProfile is a profiling system capable of profiling the
-	  whole system, include the kernel, kernel modules, libraries,
-	  and applications.
-
-	  If unsure, say N.
-
-config OPROFILE_EVENT_MULTIPLEX
-	bool "OProfile multiplexing support (EXPERIMENTAL)"
-	default n
-	depends on OPROFILE && X86
-	help
-	  The number of hardware counters is limited. The multiplexing
-	  feature enables OProfile to gather more events than counters
-	  are provided by the hardware. This is realized by switching
-	  between events at an user specified time interval.
-
-	  If unsure, say N.
-
-config HAVE_OPROFILE
-	bool
-
-config OPROFILE_NMI_TIMER
-	def_bool y
-	depends on PERF_EVENTS && HAVE_PERF_EVENTS_NMI && !PPC64
-
-config KPROBES
-	bool "Kprobes"
-	depends on MODULES
-	depends on HAVE_KPROBES
-	select KALLSYMS
-	help
-	  Kprobes allows you to trap at almost any kernel address and
-	  execute a callback function.  register_kprobe() establishes
-	  a probepoint and specifies the callback.  Kprobes is useful
-	  for kernel debugging, non-intrusive instrumentation and testing.
-	  If in doubt, say "N".
-
-config JUMP_LABEL
-       bool "Optimize very unlikely/likely branches"
-       depends on HAVE_ARCH_JUMP_LABEL
-       help
-         This option enables a transparent branch optimization that
-	 makes certain almost-always-true or almost-always-false branch
-	 conditions even cheaper to execute within the kernel.
-
-	 Certain performance-sensitive kernel code, such as trace points,
-	 scheduler functionality, networking code and KVM have such
-	 branches and include support for this optimization technique.
-
-         If it is detected that the compiler has support for "asm goto",
-	 the kernel will compile such branches with just a nop
-	 instruction. When the condition flag is toggled to true, the
-	 nop will be converted to a jump instruction to execute the
-	 conditional block of instructions.
-
-	 This technique lowers overhead and stress on the branch prediction
-	 of the processor and generally makes the kernel faster. The update
-	 of the condition is slower, but those are always very rare.
-
-	 ( On 32-bit x86, the necessary options added to the compiler
-	   flags may increase the size of the kernel slightly. )
-
-config STATIC_KEYS_SELFTEST
-	bool "Static key selftest"
-	depends on JUMP_LABEL
-	help
-	  Boot time self-test of the branch patching code.
-
-config OPTPROBES
-	def_bool y
-	depends on KPROBES && HAVE_OPTPROBES
-	depends on !PREEMPT
-
-config KPROBES_ON_FTRACE
-	def_bool y
-	depends on KPROBES && HAVE_KPROBES_ON_FTRACE
-	depends on DYNAMIC_FTRACE_WITH_REGS
-	help
-	 If function tracer is enabled and the arch supports full
-	 passing of pt_regs to function tracing, then kprobes can
-	 optimize on top of function tracing.
-
-config UPROBES
-	def_bool n
-	help
-	  Uprobes is the user-space counterpart to kprobes: they
-	  enable instrumentation applications (such as 'perf probe')
-	  to establish unintrusive probes in user-space binaries and
-	  libraries, by executing handler functions when the probes
-	  are hit by user-space applications.
-
-	  ( These probes come in the form of single-byte breakpoints,
-	    managed by the kernel and kept transparent to the probed
-	    application. )
-
-config HAVE_64BIT_ALIGNED_ACCESS
-	def_bool 64BIT && !HAVE_EFFICIENT_UNALIGNED_ACCESS
-	help
-	  Some architectures require 64 bit accesses to be 64 bit
-	  aligned, which also requires structs containing 64 bit values
-	  to be 64 bit aligned too. This includes some 32 bit
-	  architectures which can do 64 bit accesses, as well as 64 bit
-	  architectures without unaligned access.
-
-	  This symbol should be selected by an architecture if 64 bit
-	  accesses are required to be 64 bit aligned in this way even
-	  though it is not a 64 bit architecture.
-
-	  See Documentation/unaligned-memory-access.txt for more
-	  information on the topic of unaligned memory accesses.
-
-config HAVE_EFFICIENT_UNALIGNED_ACCESS
-	bool
-	help
-	  Some architectures are unable to perform unaligned accesses
-	  without the use of get_unaligned/put_unaligned. Others are
-	  unable to perform such accesses efficiently (e.g. trap on
-	  unaligned access and require fixing it up in the exception
-	  handler.)
-
-	  This symbol should be selected by an architecture if it can
-	  perform unaligned accesses efficiently to allow different
-	  code paths to be selected for these cases. Some network
-	  drivers, for example, could opt to not fix up alignment
-	  problems with received packets if doing so would not help
-	  much.
-
-	  See Documentation/unaligned-memory-access.txt for more
-	  information on the topic of unaligned memory accesses.
-
-config ARCH_USE_BUILTIN_BSWAP
-       bool
-       help
-	 Modern versions of GCC (since 4.4) have builtin functions
-	 for handling byte-swapping. Using these, instead of the old
-	 inline assembler that the architecture code provides in the
-	 __arch_bswapXX() macros, allows the compiler to see what's
-	 happening and offers more opportunity for optimisation. In
-	 particular, the compiler will be able to combine the byteswap
-	 with a nearby load or store and use load-and-swap or
-	 store-and-swap instructions if the architecture has them. It
-	 should almost *never* result in code which is worse than the
-	 hand-coded assembler in <asm/swab.h>.  But just in case it
-	 does, the use of the builtins is optional.
-
-	 Any architecture with load-and-swap or store-and-swap
-	 instructions should set this. And it shouldn't hurt to set it
-	 on architectures that don't have such instructions.
-
-config KRETPROBES
-	def_bool y
-	depends on KPROBES && HAVE_KRETPROBES
-
-config USER_RETURN_NOTIFIER
-	bool
-	depends on HAVE_USER_RETURN_NOTIFIER
-	help
-	  Provide a kernel-internal notification when a cpu is about to
-	  switch to user mode.
-
-config HAVE_IOREMAP_PROT
-	bool
-
-config HAVE_KPROBES
-	bool
-
-config HAVE_KRETPROBES
-	bool
-
-config HAVE_OPTPROBES
-	bool
-
-config HAVE_KPROBES_ON_FTRACE
-	bool
-
-config HAVE_NMI
-	bool
-
-config HAVE_NMI_WATCHDOG
-	depends on HAVE_NMI
-	bool
-#
-# An arch should select this if it provides all these things:
-#
-#	task_pt_regs()		in asm/processor.h or asm/ptrace.h
-#	arch_has_single_step()	if there is hardware single-step support
-#	arch_has_block_step()	if there is hardware block-step support
-#	asm/syscall.h		supplying asm-generic/syscall.h interface
-#	linux/regset.h		user_regset interfaces
-#	CORE_DUMP_USE_REGSET	#define'd in linux/elf.h
-#	TIF_SYSCALL_TRACE	calls tracehook_report_syscall_{entry,exit}
-#	TIF_NOTIFY_RESUME	calls tracehook_notify_resume()
-#	signal delivery		calls tracehook_signal_handler()
-#
-config HAVE_ARCH_TRACEHOOK
-	bool
-
-config HAVE_DMA_CONTIGUOUS
-	bool
-
-config GENERIC_SMP_IDLE_THREAD
-       bool
-
-config GENERIC_IDLE_POLL_SETUP
-       bool
-
-config ARCH_HAS_FORTIFY_SOURCE
-	bool
-	help
-	  An architecture should select this when it can successfully
-	  build and run with CONFIG_FORTIFY_SOURCE.
-
-config FORTIFY_COMPILE_CHECK
-	depends on ARCH_HAS_FORTIFY_SOURCE
-	bool
-	help
-	  Disable compile time size check for string routines as part
-	  of fortify source. Selecting this option will not enforce compile
-	  time size check for string functions.
-
-# Select if arch init_task initializer is different to init/init_task.c
-config ARCH_INIT_TASK
-       bool
-
-# Select if arch has its private alloc_task_struct() function
-config ARCH_TASK_STRUCT_ALLOCATOR
-	bool
-
-# Select if arch has its private alloc_thread_stack() function
-config ARCH_THREAD_STACK_ALLOCATOR
-	bool
-
-# Select if arch wants to size task_struct dynamically via arch_task_struct_size:
-config ARCH_WANTS_DYNAMIC_TASK_STRUCT
-	bool
-
-config HAVE_REGS_AND_STACK_ACCESS_API
-	bool
-	help
-	  This symbol should be selected by an architecure if it supports
-	  the API needed to access registers and stack entries from pt_regs,
-	  declared in asm/ptrace.h
-	  For example the kprobes-based event tracer needs this API.
-
-config HAVE_CLK
-	bool
-	help
-	  The <linux/clk.h> calls support software clock gating and
-	  thus are a key power management tool on many systems.
-
-config HAVE_DMA_API_DEBUG
-	bool
-
-config HAVE_HW_BREAKPOINT
-	bool
-	depends on PERF_EVENTS
-
-config HAVE_MIXED_BREAKPOINTS_REGS
-	bool
-	depends on HAVE_HW_BREAKPOINT
-	help
-	  Depending on the arch implementation of hardware breakpoints,
-	  some of them have separate registers for data and instruction
-	  breakpoints addresses, others have mixed registers to store
-	  them but define the access type in a control register.
-	  Select this option if your arch implements breakpoints under the
-	  latter fashion.
-
-config HAVE_USER_RETURN_NOTIFIER
-	bool
-
-config HAVE_PERF_EVENTS_NMI
-	bool
-	help
-	  System hardware can generate an NMI using the perf event
-	  subsystem.  Also has support for calculating CPU cycle events
-	  to determine how many clock cycles in a given period.
-
-config HAVE_PERF_REGS
-	bool
-	help
-	  Support selective register dumps for perf events. This includes
-	  bit-mapping of each registers and a unique architecture id.
-
-config HAVE_PERF_USER_STACK_DUMP
-	bool
-	help
-	  Support user stack dumps for perf event samples. This needs
-	  access to the user stack pointer which is not unified across
-	  architectures.
-
-config HAVE_ARCH_JUMP_LABEL
-	bool
-
-config HAVE_RCU_TABLE_FREE
-	bool
-
-config ARCH_HAVE_NMI_SAFE_CMPXCHG
-	bool
-
-config HAVE_ALIGNED_STRUCT_PAGE
-	bool
-	help
-	  This makes sure that struct pages are double word aligned and that
-	  e.g. the SLUB allocator can perform double word atomic operations
-	  on a struct page for better performance. However selecting this
-	  might increase the size of a struct page by a word.
-
-config HAVE_CMPXCHG_LOCAL
-	bool
-
-config HAVE_CMPXCHG_DOUBLE
-	bool
-
-config ARCH_WANT_IPC_PARSE_VERSION
-	bool
-
-config ARCH_WANT_COMPAT_IPC_PARSE_VERSION
-	bool
-
-config ARCH_WANT_OLD_COMPAT_IPC
-	select ARCH_WANT_COMPAT_IPC_PARSE_VERSION
-	bool
-
-config HAVE_ARCH_SECCOMP_FILTER
-	bool
-	help
-	  An arch should select this symbol if it provides all of these things:
-	  - syscall_get_arch()
-	  - syscall_get_arguments()
-	  - syscall_rollback()
-	  - syscall_set_return_value()
-	  - SIGSYS siginfo_t support
-	  - secure_computing is called from a ptrace_event()-safe context
-	  - secure_computing return value is checked and a return value of -1
-	    results in the system call being skipped immediately.
-	  - seccomp syscall wired up
-
-config SECCOMP_FILTER
-	def_bool y
-	depends on HAVE_ARCH_SECCOMP_FILTER && SECCOMP && NET
-	help
-	  Enable tasks to build secure computing environments defined
-	  in terms of Berkeley Packet Filter programs which implement
-	  task-defined system call filtering polices.
-
-	  See Documentation/prctl/seccomp_filter.txt for details.
-
-config HAVE_GCC_PLUGINS
-	bool
-	help
-	  An arch should select this symbol if it supports building with
-	  GCC plugins.
-
-menuconfig GCC_PLUGINS
-	bool "GCC plugins"
-	depends on HAVE_GCC_PLUGINS
-	depends on !COMPILE_TEST
-	help
-	  GCC plugins are loadable modules that provide extra features to the
-	  compiler. They are useful for runtime instrumentation and static analysis.
-
-	  See Documentation/gcc-plugins.txt for details.
-
-config GCC_PLUGIN_CYC_COMPLEXITY
-	bool "Compute the cyclomatic complexity of a function"
-	depends on GCC_PLUGINS
-	help
-	  The complexity M of a function's control flow graph is defined as:
-	   M = E - N + 2P
-	  where
-
-	  E = the number of edges
-	  N = the number of nodes
-	  P = the number of connected components (exit nodes).
-
-config GCC_PLUGIN_SANCOV
-	bool
-	depends on GCC_PLUGINS
-	help
-	  This plugin inserts a __sanitizer_cov_trace_pc() call at the start of
-	  basic blocks. It supports all gcc versions with plugin support (from
-	  gcc-4.5 on). It is based on the commit "Add fuzzing coverage support"
-	  by Dmitry Vyukov <dvyukov@google.com>.
-
-config GCC_PLUGIN_LATENT_ENTROPY
-	bool "Generate some entropy during boot and runtime"
-	depends on GCC_PLUGINS
-	help
-	  By saying Y here the kernel will instrument some kernel code to
-	  extract some entropy from both original and artificially created
-	  program state.  This will help especially embedded systems where
-	  there is little 'natural' source of entropy normally.  The cost
-	  is some slowdown of the boot process (about 0.5%) and fork and
-	  irq processing.
-
-	  Note that entropy extracted this way is not cryptographically
-	  secure!
-
-	  This plugin was ported from grsecurity/PaX. More information at:
-	   * https://grsecurity.net/
-	   * https://pax.grsecurity.net/
-
-config HAVE_CC_STACKPROTECTOR
-	bool
-	help
-	  An arch should select this symbol if:
-	  - its compiler supports the -fstack-protector option
-	  - it has implemented a stack canary (e.g. __stack_chk_guard)
-
-config CC_STACKPROTECTOR
-	def_bool n
-	help
-	  Set when a stack-protector mode is enabled, so that the build
-	  can enable kernel-side support for the GCC feature.
-
-choice
-	prompt "Stack Protector buffer overflow detection"
-	depends on HAVE_CC_STACKPROTECTOR
-	default CC_STACKPROTECTOR_NONE
-	help
-	  This option turns on the "stack-protector" GCC feature. This
-	  feature puts, at the beginning of functions, a canary value on
-	  the stack just before the return address, and validates
-	  the value just before actually returning.  Stack based buffer
-	  overflows (that need to overwrite this return address) now also
-	  overwrite the canary, which gets detected and the attack is then
-	  neutralized via a kernel panic.
-
-config CC_STACKPROTECTOR_NONE
-	bool "None"
-	help
-	  Disable "stack-protector" GCC feature.
-
-config CC_STACKPROTECTOR_REGULAR
-	bool "Regular"
-	select CC_STACKPROTECTOR
-	help
-	  Functions will have the stack-protector canary logic added if they
-	  have an 8-byte or larger character array on the stack.
-
-	  This feature requires gcc version 4.2 or above, or a distribution
-	  gcc with the feature backported ("-fstack-protector").
-
-	  On an x86 "defconfig" build, this feature adds canary checks to
-	  about 3% of all kernel functions, which increases kernel code size
-	  by about 0.3%.
-
-config CC_STACKPROTECTOR_STRONG
-	bool "Strong"
-	select CC_STACKPROTECTOR
-	help
-	  Functions will have the stack-protector canary logic added in any
-	  of the following conditions:
-
-	  - local variable's address used as part of the right hand side of an
-	    assignment or function argument
-	  - local variable is an array (or union containing an array),
-	    regardless of array type or length
-	  - uses register local variables
-
-	  This feature requires gcc version 4.9 or above, or a distribution
-	  gcc with the feature backported ("-fstack-protector-strong").
-
-	  On an x86 "defconfig" build, this feature adds canary checks to
-	  about 20% of all kernel functions, which increases the kernel code
-	  size by about 2%.
-
-endchoice
-
-config THIN_ARCHIVES
-	bool
-	help
-	  Select this if the architecture wants to use thin archives
-	  instead of ld -r to create the built-in.o files.
-
-config LD_DEAD_CODE_DATA_ELIMINATION
-	bool
-	help
-	  Select this if the architecture wants to do dead code and
-	  data elimination with the linker by compiling with
-	  -ffunction-sections -fdata-sections and linking with
-	  --gc-sections.
-
-	  This requires that the arch annotates or otherwise protects
-	  its external entry points from being discarded. Linker scripts
-	  must also merge .text.*, .data.*, and .bss.* correctly into
-	  output sections. Care must be taken not to pull in unrelated
-	  sections (e.g., '.text.init'). Typically '.' in section names
-	  is used to distinguish them from label names / C identifiers.
-
-config LTO
-	def_bool n
-
-config ARCH_SUPPORTS_LTO_CLANG
-	bool
-	help
-	  An architecture should select this option it supports:
-	  - compiling with clang,
-	  - compiling inline assembly with clang's integrated assembler,
-	  - and linking with either lld or GNU gold w/ LLVMgold.
-
-choice
-	prompt "Link-Time Optimization (LTO) (EXPERIMENTAL)"
-	default LTO_NONE
-	help
-	  This option turns on Link-Time Optimization (LTO).
-
-config LTO_NONE
-	bool "None"
-
-config LTO_CLANG
-	bool "Use clang Link Time Optimization (LTO) (EXPERIMENTAL)"
-	depends on ARCH_SUPPORTS_LTO_CLANG
-	depends on !FTRACE_MCOUNT_RECORD || HAVE_C_RECORDMCOUNT
-	select LTO
-	select THIN_ARCHIVES
-	select LD_DEAD_CODE_DATA_ELIMINATION
-	help
-          This option enables clang's Link Time Optimization (LTO), which allows
-          the compiler to optimize the kernel globally at link time. If you
-          enable this option, the compiler generates LLVM IR instead of object
-          files, and the actual compilation from IR occurs at the LTO link step,
-          which may take several minutes.
-
-          If you select this option, you must compile the kernel with clang >=
-          5.0 (make CC=clang) and GNU gold from binutils >= 2.27, and have the
-          LLVMgold plug-in in LD_LIBRARY_PATH.
-
-endchoice
-
-config CFI
-	bool
-
-config CFI_PERMISSIVE
-	bool "Use CFI in permissive mode"
-	depends on CFI
-	help
-	  When selected, Control Flow Integrity (CFI) violations result in a
-	  warning instead of a kernel panic. This option is useful for finding
-	  CFI violations in drivers during development.
-
-config CFI_CLANG
-	bool "Use clang Control Flow Integrity (CFI) (EXPERIMENTAL)"
-	depends on LTO_CLANG
-	depends on KALLSYMS
-	select CFI
-	help
-	  This option enables clang Control Flow Integrity (CFI), which adds
-	  runtime checking for indirect function calls.
-
-config CFI_CLANG_SHADOW
-	bool "Use CFI shadow to speed up cross-module checks"
 	default y
-	depends on CFI_CLANG
+	select ARCH_MIGHT_HAVE_PC_PARPORT
+	select ARCH_MIGHT_HAVE_PC_SERIO
+	select ARCH_USE_CMPXCHG_LOCKREF
+	select HAVE_AOUT
+	select HAVE_IDE
+	select HAVE_OPROFILE
+	select HAVE_PCSPKR_PLATFORM
+	select HAVE_PERF_EVENTS
+	select VIRT_TO_BUS
+	select GENERIC_IRQ_PROBE
+	select AUTO_IRQ_AFFINITY if SMP
+	select GENERIC_IRQ_SHOW
+	select ARCH_WANT_IPC_PARSE_VERSION
+	select ARCH_HAVE_NMI_SAFE_CMPXCHG
+	select AUDIT_ARCH
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_SMP_IDLE_THREAD
+	select GENERIC_STRNCPY_FROM_USER
+	select GENERIC_STRNLEN_USER
+	select HAVE_ARCH_AUDITSYSCALL
+	select HAVE_MOD_ARCH_SPECIFIC
+	select MODULES_USE_ELF_RELA
+	select ODD_RT_SIGACTION
+	select OLD_SIGSUSPEND
+	select CPU_NO_EFFICIENT_FFS if !ALPHA_EV67
 	help
-	  If you select this option, the kernel builds a fast look-up table of
-	  CFI check functions in loaded modules to reduce overhead.
+	  The Alpha is a 64-bit general-purpose processor designed and
+	  marketed by the Digital Equipment Corporation of blessed memory,
+	  now Hewlett-Packard.  The Alpha Linux project has a home page at
+	  <http://www.alphalinux.org/>.
 
-config HAVE_ARCH_WITHIN_STACK_FRAMES
+config 64BIT
+	def_bool y
+
+config MMU
 	bool
-	help
-	  An architecture should select this if it can walk the kernel stack
-	  frames to determine if an object is part of either the arguments
-	  or local variables (i.e. that it excludes saved return addresses,
-	  and similar) by implementing an inline arch_within_stack_frames(),
-	  which is used by CONFIG_HARDENED_USERCOPY.
+	default y
 
-config HAVE_CONTEXT_TRACKING
-	bool
-	help
-	  Provide kernel/user boundaries probes necessary for subsystems
-	  that need it, such as userspace RCU extended quiescent state.
-	  Syscalls need to be wrapped inside user_exit()-user_enter() through
-	  the slow path using TIF_NOHZ flag. Exceptions handlers must be
-	  wrapped as well. Irqs are already protected inside
-	  rcu_irq_enter/rcu_irq_exit() but preemption or signal handling on
-	  irq exit still need to be protected.
-
-config HAVE_VIRT_CPU_ACCOUNTING
+config RWSEM_GENERIC_SPINLOCK
 	bool
 
-config HAVE_VIRT_CPU_ACCOUNTING_GEN
+config RWSEM_XCHGADD_ALGORITHM
 	bool
-	default y if 64BIT
-	help
-	  With VIRT_CPU_ACCOUNTING_GEN, cputime_t becomes 64-bit.
-	  Before enabling this option, arch code must be audited
-	  to ensure there are no races in concurrent read/write of
-	  cputime_t. For example, reading/writing 64-bit cputime_t on
-	  some 32-bit arches may require multiple accesses, so proper
-	  locking is needed to protect against concurrent accesses.
+	default y
 
-
-config HAVE_IRQ_TIME_ACCOUNTING
+config ARCH_HAS_ILOG2_U32
 	bool
-	help
-	  Archs need to ensure they use a high enough resolution clock to
-	  support irq time accounting and then call enable_sched_clock_irqtime().
+	default n
 
-config HAVE_ARCH_TRANSPARENT_HUGEPAGE
+config ARCH_HAS_ILOG2_U64
 	bool
+	default n
 
-config HAVE_ARCH_HUGE_VMAP
+config GENERIC_CALIBRATE_DELAY
 	bool
+	default y
 
-config HAVE_ARCH_SOFT_DIRTY
+config ZONE_DMA
 	bool
+	default y
 
-config HAVE_MOD_ARCH_SPECIFIC
-	bool
-	help
-	  The arch uses struct mod_arch_specific to store data.  Many arches
-	  just need a simple module loader without arch specific data - those
-	  should not enable this.
+config ARCH_DMA_ADDR_T_64BIT
+	def_bool y
 
-config MODULES_USE_ELF_RELA
-	bool
-	help
-	  Modules only use ELF RELA relocations.  Modules with ELF REL
-	  relocations will give an error.
+config NEED_DMA_MAP_STATE
+       def_bool y
 
-config MODULES_USE_ELF_REL
-	bool
-	help
-	  Modules only use ELF REL relocations.  Modules with ELF RELA
-	  relocations will give an error.
+config NEED_SG_DMA_LENGTH
+	def_bool y
 
-config HAVE_UNDERSCORE_SYMBOL_PREFIX
+config GENERIC_ISA_DMA
 	bool
-	help
-	  Some architectures generate an _ in front of C symbols; things like
-	  module loading and assembly files need to know about this.
-
-config HAVE_IRQ_EXIT_ON_IRQ_STACK
-	bool
-	help
-	  Architecture doesn't only execute the irq handler on the irq stack
-	  but also irq_exit(). This way we can process softirqs on this irq
-	  stack instead of switching to a new one when we call __do_softirq()
-	  in the end of an hardirq.
-	  This spares a stack switch and improves cache usage on softirq
-	  processing.
+	default y
 
 config PGTABLE_LEVELS
 	int
-	default 2
+	default 3
 
-config ARCH_HAS_ELF_RANDOMIZE
-	bool
-	help
-	  An architecture supports choosing randomized locations for
-	  stack, mmap, brk, and ET_DYN. Defined functions:
-	  - arch_mmap_rnd()
-	  - arch_randomize_brk()
+source "init/Kconfig"
+source "kernel/Kconfig.freezer"
 
-config HAVE_ARCH_MMAP_RND_BITS
-	bool
-	help
-	  An arch should select this symbol if it supports setting a variable
-	  number of bits for use in establishing the base address for mmap
-	  allocations, has MMU enabled and provides values for both:
-	  - ARCH_MMAP_RND_BITS_MIN
-	  - ARCH_MMAP_RND_BITS_MAX
-
-config HAVE_EXIT_THREAD
-	bool
-	help
-	  An architecture implements exit_thread.
-
-config ARCH_MMAP_RND_BITS_MIN
-	int
-
-config ARCH_MMAP_RND_BITS_MAX
-	int
-
-config ARCH_MMAP_RND_BITS_DEFAULT
-	int
-
-config ARCH_MMAP_RND_BITS
-	int "Number of bits to use for ASLR of mmap base address" if EXPERT
-	range ARCH_MMAP_RND_BITS_MIN ARCH_MMAP_RND_BITS_MAX
-	default ARCH_MMAP_RND_BITS_DEFAULT if ARCH_MMAP_RND_BITS_DEFAULT
-	default ARCH_MMAP_RND_BITS_MIN
-	depends on HAVE_ARCH_MMAP_RND_BITS
-	help
-	  This value can be used to select the number of bits to use to
-	  determine the random offset to the base address of vma regions
-	  resulting from mmap allocations. This value will be bounded
-	  by the architecture's minimum and maximum supported values.
-
-	  This value can be changed after boot using the
-	  /proc/sys/vm/mmap_rnd_bits tunable
-
-config HAVE_ARCH_MMAP_RND_COMPAT_BITS
-	bool
-	help
-	  An arch should select this symbol if it supports running applications
-	  in compatibility mode, supports setting a variable number of bits for
-	  use in establishing the base address for mmap allocations, has MMU
-	  enabled and provides values for both:
-	  - ARCH_MMAP_RND_COMPAT_BITS_MIN
-	  - ARCH_MMAP_RND_COMPAT_BITS_MAX
-
-config ARCH_MMAP_RND_COMPAT_BITS_MIN
-	int
-
-config ARCH_MMAP_RND_COMPAT_BITS_MAX
-	int
-
-config ARCH_MMAP_RND_COMPAT_BITS_DEFAULT
-	int
-
-config ARCH_MMAP_RND_COMPAT_BITS
-	int "Number of bits to use for ASLR of mmap base address for compatible applications" if EXPERT
-	range ARCH_MMAP_RND_COMPAT_BITS_MIN ARCH_MMAP_RND_COMPAT_BITS_MAX
-	default ARCH_MMAP_RND_COMPAT_BITS_DEFAULT if ARCH_MMAP_RND_COMPAT_BITS_DEFAULT
-	default ARCH_MMAP_RND_COMPAT_BITS_MIN
-	depends on HAVE_ARCH_MMAP_RND_COMPAT_BITS
-	help
-	  This value can be used to select the number of bits to use to
-	  determine the random offset to the base address of vma regions
-	  resulting from mmap allocations for compatible applications This
-	  value will be bounded by the architecture's minimum and maximum
-	  supported values.
-
-	  This value can be changed after boot using the
-	  /proc/sys/vm/mmap_rnd_compat_bits tunable
-
-config HAVE_COPY_THREAD_TLS
-	bool
-	help
-	  Architecture provides copy_thread_tls to accept tls argument via
-	  normal C parameter passing, rather than extracting the syscall
-	  argument from pt_regs.
-
-config HAVE_STACK_VALIDATION
-	bool
-	help
-	  Architecture supports the 'objtool check' host tool command, which
-	  performs compile-time stack metadata validation.
-
-config HAVE_ARCH_HASH
-	bool
-	default n
-	help
-	  If this is set, the architecture provides an <asm/hash.h>
-	  file which provides platform-specific implementations of some
-	  functions in <linux/hash.h> or fs/namei.c.
-
-config ISA_BUS_API
-	def_bool ISA
-
-#
-# ABI hall of shame
-#
-config CLONE_BACKWARDS
-	bool
-	help
-	  Architecture has tls passed as the 4th argument of clone(2),
-	  not the 5th one.
-
-config CLONE_BACKWARDS2
-	bool
-	help
-	  Architecture has the first two arguments of clone(2) swapped.
-
-config CLONE_BACKWARDS3
-	bool
-	help
-	  Architecture has tls passed as the 3rd argument of clone(2),
-	  not the 5th one.
-
-config ODD_RT_SIGACTION
-	bool
-	help
-	  Architecture has unusual rt_sigaction(2) arguments
-
-config OLD_SIGSUSPEND
-	bool
-	help
-	  Architecture has old sigsuspend(2) syscall, of one-argument variety
-
-config OLD_SIGSUSPEND3
-	bool
-	help
-	  Even weirder antique ABI - three-argument sigsuspend(2)
-
-config OLD_SIGACTION
-	bool
-	help
-	  Architecture has old sigaction(2) syscall.  Nope, not the same
-	  as OLD_SIGSUSPEND | OLD_SIGSUSPEND3 - alpha has sigsuspend(2),
-	  but fairly different variant of sigaction(2), thanks to OSF/1
-	  compatibility...
-
-config COMPAT_OLD_SIGACTION
+config AUDIT_ARCH
 	bool
 
-config ARCH_NO_COHERENT_DMA_MMAP
-	bool
+menu "System setup"
 
-config CPU_NO_EFFICIENT_FFS
-	def_bool n
-
-config HAVE_ARCH_VMAP_STACK
-	def_bool n
-	help
-	  An arch should select this symbol if it can support kernel stacks
-	  in vmalloc space.  This means:
-
-	  - vmalloc space must be large enough to hold many kernel stacks.
-	    This may rule out many 32-bit architectures.
-
-	  - Stacks in vmalloc space need to work reliably.  For example, if
-	    vmap page tables are created on demand, either this mechanism
-	    needs to work while the stack points to a virtual address with
-	    unpopulated page tables or arch code (switch_to() and switch_mm(),
-	    most likely) needs to ensure that the stack's page table entries
-	    are populated before running on a possibly unpopulated stack.
-
-	  - If the stack overflows into a guard page, something reasonable
-	    should happen.  The definition of "reasonable" is flexible, but
-	    instantly rebooting without logging anything would be unfriendly.
-
-config VMAP_STACK
-	default y
-	bool "Use a virtually-mapped stack"
-	depends on HAVE_ARCH_VMAP_STACK && !KASAN
+choice
+	prompt "Alpha system type"
+	default ALPHA_GENERIC
 	---help---
-	  Enable this if you want the use virtually-mapped kernel stacks
-	  with guard pages.  This causes kernel stack overflows to be
-	  caught immediately rather than causing difficult-to-diagnose
-	  corruption.
+	  This is the system type of your hardware.  A "generic" kernel will
+	  run on any supported Alpha system. However, if you configure a
+	  kernel for your specific system, it will be faster and smaller.
 
-	  This is presently incompatible with KASAN because KASAN expects
-	  the stack to map directly to the KASAN shadow map using a formula
-	  that is incorrect if the stack is in vmalloc space.
+	  To find out what type of Alpha system you have, you may want to
+	  check out the Linux/Alpha FAQ, accessible on the WWW from
+	  <http://www.alphalinux.org/>. In summary:
 
-source "kernel/gcov/Kconfig"
+	  Alcor/Alpha-XLT     AS 600, AS 500, XL-300, XL-366
+	  Alpha-XL            XL-233, XL-266
+	  AlphaBook1          Alpha laptop
+	  Avanti              AS 200, AS 205, AS 250, AS 255, AS 300, AS 400
+	  Cabriolet           AlphaPC64, AlphaPCI64
+	  DP264               DP264 / DS20 / ES40 / DS10 / DS10L
+	  EB164               EB164 21164 evaluation board
+	  EB64+               EB64+ 21064 evaluation board
+	  EB66                EB66 21066 evaluation board
+	  EB66+               EB66+ 21066 evaluation board
+	  Jensen              DECpc 150, DEC 2000 models 300, 500
+	  LX164               AlphaPC164-LX
+	  Lynx                AS 2100A
+	  Miata               Personal Workstation 433/500/600 a/au
+	  Marvel              AlphaServer ES47 / ES80 / GS1280
+	  Mikasa              AS 1000
+	  Noname              AXPpci33, UDB (Multia)
+	  Noritake            AS 1000A, AS 600A, AS 800
+	  PC164               AlphaPC164
+	  Rawhide             AS 1200, AS 4000, AS 4100
+	  Ruffian             RPX164-2, AlphaPC164-UX, AlphaPC164-BX
+	  SX164               AlphaPC164-SX
+	  Sable               AS 2000, AS 2100
+	  Shark               DS 20L
+	  Takara              Takara (OEM)
+	  Titan               AlphaServer ES45 / DS25 / DS15
+	  Wildfire            AlphaServer GS 40/80/160/320
+
+	  If you don't know what to do, choose "generic".
+
+config ALPHA_GENERIC
+	bool "Generic"
+	depends on TTY
+	help
+	  A generic kernel will run on all supported Alpha hardware.
+
+config ALPHA_ALCOR
+	bool "Alcor/Alpha-XLT"
+	help
+	  For systems using the Digital ALCOR chipset: 5 chips (4, 64-bit data
+	  slices (Data Switch, DSW) - 208-pin PQFP and 1 control (Control, I/O
+	  Address, CIA) - a 383 pin plastic PGA).  It provides a DRAM
+	  controller (256-bit memory bus) and a PCI interface.  It also does
+	  all the work required to support an external Bcache and to maintain
+	  memory coherence when a PCI device DMAs into (or out of) memory.
+
+config ALPHA_XL
+	bool "Alpha-XL"
+	help
+	  XL-233 and XL-266-based Alpha systems.
+
+config ALPHA_BOOK1
+	bool "AlphaBook1"
+	help
+	  Dec AlphaBook1/Burns Alpha-based laptops.
+
+config ALPHA_AVANTI_CH
+	bool "Avanti"
+
+config ALPHA_CABRIOLET
+	bool "Cabriolet"
+	help
+	  Cabriolet AlphaPC64, AlphaPCI64 systems.  Derived from EB64+ but now
+	  baby-AT with Flash boot ROM, no on-board SCSI or Ethernet. 3 ISA
+	  slots, 4 PCI slots (one pair are on a shared slot), uses plug-in
+	  Bcache SIMMs.  Requires power supply with 3.3V output.
+
+config ALPHA_DP264
+	bool "DP264"
+	help
+	  Various 21264 systems with the tsunami core logic chipset.
+	  API Networks: 264DP, UP2000(+), CS20;
+	  Compaq: DS10(E,L), XP900, XP1000, DS20(E), ES40.
+
+config ALPHA_EB164
+	bool "EB164"
+	help
+	  EB164 21164 evaluation board from DEC.  Uses 21164 and ALCOR.  Has
+	  ISA and PCI expansion (3 ISA slots, 2 64-bit PCI slots (one is
+	  shared with an ISA slot) and 2 32-bit PCI slots.  Uses plus-in
+	  Bcache SIMMs. I/O sub-system provides SuperI/O (2S, 1P, FD), KBD,
+	  MOUSE (PS2 style), RTC/NVRAM.  Boot ROM is Flash.  PC-AT-sized
+	  motherboard.  Requires power supply with 3.3V output.
+
+config ALPHA_EB64P_CH
+	bool "EB64+"
+
+config ALPHA_EB66
+	bool "EB66"
+	help
+	  A Digital DS group board.  Uses 21066 or 21066A.  I/O sub-system is
+	  identical to EB64+.  Baby PC-AT size.  Runs from standard PC power
+	  supply.  The EB66 schematic was published as a marketing poster
+	  advertising the 21066 as "the first microprocessor in the world with
+	  embedded PCI".
+
+config ALPHA_EB66P
+	bool "EB66+"
+	help
+	  Later variant of the EB66 board.
+
+config ALPHA_EIGER
+	bool "Eiger"
+	help
+	  Apparently an obscure OEM single-board computer based on the
+	  Typhoon/Tsunami chipset family. Information on it is scanty.
+
+config ALPHA_JENSEN
+	bool "Jensen"
+	help
+	  DEC PC 150 AXP (aka Jensen): This is a very old Digital system - one
+	  of the first-generation Alpha systems. A number of these systems
+	  seem to be available on the second- hand market. The Jensen is a
+	  floor-standing tower system which originally used a 150MHz 21064 It
+	  used programmable logic to interface a 486 EISA I/O bridge to the
+	  CPU.
+
+config ALPHA_LX164
+	bool "LX164"
+	help
+	  A technical overview of this board is available at
+	  <http://www.unix-ag.org/Linux-Alpha/Architectures/LX164.html>.
+
+config ALPHA_LYNX
+	bool "Lynx"
+	help
+	  AlphaServer 2100A-based systems.
+
+config ALPHA_MARVEL
+	bool "Marvel"
+	help
+	  AlphaServer ES47 / ES80 / GS1280 based on EV7.
+
+config ALPHA_MIATA
+	bool "Miata"
+	help
+	  The Digital PersonalWorkStation (PWS 433a, 433au, 500a, 500au, 600a,
+	  or 600au).
+
+config ALPHA_MIKASA
+	bool "Mikasa"
+	help
+	  AlphaServer 1000-based Alpha systems.
+
+config ALPHA_NAUTILUS
+	bool "Nautilus"
+	help
+	  Alpha systems based on the AMD 751 & ALI 1543C chipsets.
+
+config ALPHA_NONAME_CH
+	bool "Noname"
+
+config ALPHA_NORITAKE
+	bool "Noritake"
+	help
+	  AlphaServer 1000A, AlphaServer 600A, and AlphaServer 800-based
+	  systems.
+
+config ALPHA_PC164
+	bool "PC164"
+
+config ALPHA_P2K
+	bool "Platform2000"
+
+config ALPHA_RAWHIDE
+	bool "Rawhide"
+	help
+	  AlphaServer 1200, AlphaServer 4000 and AlphaServer 4100 machines.
+	  See HOWTO at
+	  <http://www.alphalinux.org/docs/rawhide/4100_install.shtml>.
+
+config ALPHA_RUFFIAN
+	bool "Ruffian"
+	help
+	  Samsung APC164UX.  There is a page on known problems and workarounds
+	  at <http://www.alphalinux.org/faq/FAQ-11.html>.
+
+config ALPHA_RX164
+	bool "RX164"
+
+config ALPHA_SX164
+	bool "SX164"
+
+config ALPHA_SABLE
+	bool "Sable"
+	help
+	  Digital AlphaServer 2000 and 2100-based systems.
+
+config ALPHA_SHARK
+	bool "Shark"
+
+config ALPHA_TAKARA
+	bool "Takara"
+	help
+	  Alpha 11164-based OEM single-board computer.
+
+config ALPHA_TITAN
+	bool "Titan"
+	help
+	  AlphaServer ES45/DS25 SMP based on EV68 and Titan chipset.
+
+config ALPHA_WILDFIRE
+	bool "Wildfire"
+	help
+	  AlphaServer GS 40/80/160/320 SMP based on the EV67 core.
+
+endchoice
+
+# clear all implied options (don't want default values for those):
+# Most of these machines have ISA slots; not exactly sure which don't,
+# and this doesn't activate hordes of code, so do it always.
+config ISA
+	bool
+	default y
+	help
+	  Find out whether you have ISA slots on your motherboard.  ISA is the
+	  name of a bus system, i.e. the way the CPU talks to the other stuff
+	  inside your box.  Other bus systems are PCI, EISA, MicroChannel
+	  (MCA) or VESA.  ISA is an older system, now being displaced by PCI;
+	  newer boards don't support it.  If you have ISA, say Y, otherwise N.
+
+config ISA_DMA_API
+	bool
+	default y
+
+config PCI
+	bool
+	depends on !ALPHA_JENSEN
+	select GENERIC_PCI_IOMAP
+	default y
+	help
+	  Find out whether you have a PCI motherboard. PCI is the name of a
+	  bus system, i.e. the way the CPU talks to the other stuff inside
+	  your box. Other bus systems are ISA, EISA, MicroChannel (MCA) or
+	  VESA. If you have PCI, say Y, otherwise N.
+
+config PCI_DOMAINS
+	bool
+	default y
+
+config PCI_SYSCALL
+	def_bool PCI
+
+config IOMMU_HELPER
+	def_bool PCI
+
+config ALPHA_NONAME
+	bool
+	depends on ALPHA_BOOK1 || ALPHA_NONAME_CH
+	default y
+	help
+	  The AXPpci33 (aka NoName), is based on the EB66 (includes the Multia
+	  UDB).  This design was produced by Digital's Technical OEM (TOEM)
+	  group. It uses the 21066 processor running at 166MHz or 233MHz. It
+	  is a baby-AT size, and runs from a standard PC power supply. It has
+	  5 ISA slots and 3 PCI slots (one pair are a shared slot). There are
+	  2 versions, with either PS/2 or large DIN connectors for the
+	  keyboard.
+
+config ALPHA_EV4
+	bool
+	depends on ALPHA_JENSEN || (ALPHA_SABLE && !ALPHA_GAMMA) || ALPHA_LYNX || ALPHA_NORITAKE && !ALPHA_PRIMO || ALPHA_MIKASA && !ALPHA_PRIMO || ALPHA_CABRIOLET || ALPHA_AVANTI_CH || ALPHA_EB64P_CH || ALPHA_XL || ALPHA_NONAME || ALPHA_EB66 || ALPHA_EB66P || ALPHA_P2K
+	default y if !ALPHA_LYNX
+
+config ALPHA_LCA
+	bool
+	depends on ALPHA_NONAME || ALPHA_EB66 || ALPHA_EB66P || ALPHA_P2K
+	default y
+
+config ALPHA_APECS
+	bool
+	depends on !ALPHA_PRIMO && (ALPHA_NORITAKE || ALPHA_MIKASA) || ALPHA_CABRIOLET || ALPHA_AVANTI_CH || ALPHA_EB64P_CH || ALPHA_XL
+	default y
+
+config ALPHA_EB64P
+	bool
+	depends on ALPHA_CABRIOLET || ALPHA_EB64P_CH
+	default y
+	help
+	  Uses 21064 or 21064A and APECs.  Has ISA and PCI expansion (3 ISA,
+	  2 PCI, one pair are on a shared slot). Supports 36-bit DRAM SIMs.
+	  ISA bus generated by Intel SaturnI/O PCI-ISA bridge. On-board SCSI
+	  (NCR 810 on PCI) Ethernet (Digital 21040), KBD, MOUSE (PS2 style),
+	  SuperI/O (2S, 1P, FD), RTC/NVRAM. Boot ROM is EPROM.  PC-AT size.
+	  Runs from standard PC power supply.
+
+config ALPHA_EV5
+	bool "EV5 CPU(s) (model 5/xxx)?" if ALPHA_LYNX
+	default y if ALPHA_RX164 || ALPHA_RAWHIDE || ALPHA_MIATA || ALPHA_LX164 || ALPHA_SX164 || ALPHA_RUFFIAN || ALPHA_SABLE && ALPHA_GAMMA || ALPHA_NORITAKE && ALPHA_PRIMO || ALPHA_MIKASA && ALPHA_PRIMO || ALPHA_PC164 || ALPHA_TAKARA || ALPHA_EB164 || ALPHA_ALCOR
+
+config ALPHA_EV4
+	bool
+	default y if ALPHA_LYNX && !ALPHA_EV5
+
+config ALPHA_CIA
+	bool
+	depends on ALPHA_MIATA || ALPHA_LX164 || ALPHA_SX164 || ALPHA_RUFFIAN || ALPHA_NORITAKE && ALPHA_PRIMO || ALPHA_MIKASA && ALPHA_PRIMO || ALPHA_PC164 || ALPHA_TAKARA || ALPHA_EB164 || ALPHA_ALCOR
+	default y
+
+config ALPHA_EV56
+	bool "EV56 CPU (speed >= 366MHz)?" if ALPHA_ALCOR
+	default y if ALPHA_RX164 || ALPHA_MIATA || ALPHA_LX164 || ALPHA_SX164 || ALPHA_RUFFIAN || ALPHA_PC164 || ALPHA_TAKARA
+
+config ALPHA_EV56
+	prompt "EV56 CPU (speed >= 333MHz)?"
+	depends on ALPHA_NORITAKE || ALPHA_PRIMO
+
+config ALPHA_EV56
+	prompt "EV56 CPU (speed >= 400MHz)?"
+	depends on ALPHA_RAWHIDE
+
+config ALPHA_PRIMO
+	bool "EV5 CPU daughtercard (model 5/xxx)?"
+	depends on ALPHA_NORITAKE || ALPHA_MIKASA
+	help
+	  Say Y if you have an AS 1000 5/xxx or an AS 1000A 5/xxx.
+
+config ALPHA_GAMMA
+	bool "EV5 CPU(s) (model 5/xxx)?"
+	depends on ALPHA_SABLE
+	help
+	  Say Y if you have an AS 2000 5/xxx or an AS 2100 5/xxx.
+
+config ALPHA_GAMMA
+	bool
+	depends on ALPHA_LYNX
+	default y
+
+config ALPHA_T2
+	bool
+	depends on ALPHA_SABLE || ALPHA_LYNX
+	default y
+
+config ALPHA_PYXIS
+	bool
+	depends on ALPHA_MIATA || ALPHA_LX164 || ALPHA_SX164 || ALPHA_RUFFIAN
+	default y
+
+config ALPHA_EV6
+	bool
+	depends on ALPHA_NAUTILUS || ALPHA_WILDFIRE || ALPHA_TITAN || ALPHA_SHARK || ALPHA_DP264 || ALPHA_EIGER || ALPHA_MARVEL
+	default y
+
+config ALPHA_TSUNAMI
+	bool
+	depends on ALPHA_SHARK || ALPHA_DP264 || ALPHA_EIGER
+	default y
+
+config ALPHA_EV67
+	bool "EV67 (or later) CPU (speed > 600MHz)?" if ALPHA_DP264 || ALPHA_EIGER
+	default y if ALPHA_NAUTILUS || ALPHA_WILDFIRE || ALPHA_TITAN || ALPHA_SHARK || ALPHA_MARVEL
+	help
+	  Is this a machine based on the EV67 core?  If in doubt, select N here
+	  and the machine will be treated as an EV6.
+
+config ALPHA_MCPCIA
+	bool
+	depends on ALPHA_RAWHIDE
+	default y
+
+config ALPHA_POLARIS
+	bool
+	depends on ALPHA_RX164
+	default y
+
+config ALPHA_IRONGATE
+	bool
+	depends on ALPHA_NAUTILUS
+	default y
+
+config GENERIC_HWEIGHT
+	bool
+	default y if !ALPHA_EV67
+
+config ALPHA_AVANTI
+	bool
+	depends on ALPHA_XL || ALPHA_AVANTI_CH
+	default y
+	help
+	  Avanti AS 200, AS 205, AS 250, AS 255, AS 300, and AS 400-based
+	  Alphas. Info at
+	  <http://www.unix-ag.org/Linux-Alpha/Architectures/Avanti.html>.
+
+config ALPHA_BROKEN_IRQ_MASK
+	bool
+	depends on ALPHA_GENERIC || ALPHA_PC164
+	default y
+
+config VGA_HOSE
+	bool
+	depends on VGA_CONSOLE && (ALPHA_GENERIC || ALPHA_TITAN || ALPHA_MARVEL || ALPHA_TSUNAMI)
+	default y
+	help
+	  Support VGA on an arbitrary hose; needed for several platforms
+	  which always have multiple hoses, and whose consoles support it.
+
+
+config ALPHA_QEMU
+	bool "Run under QEMU emulation"
+	depends on !ALPHA_GENERIC
+	---help---
+	  Assume the presence of special features supported by QEMU PALcode
+	  that reduce the overhead of system emulation.
+
+	  Generic kernels will auto-detect QEMU.  But when building a
+	  system-specific kernel, the assumption is that we want to
+	  elimiate as many runtime tests as possible.
+
+	  If unsure, say N.
+
+
+config ALPHA_SRM
+	bool "Use SRM as bootloader" if ALPHA_CABRIOLET || ALPHA_AVANTI_CH || ALPHA_EB64P || ALPHA_PC164 || ALPHA_TAKARA || ALPHA_EB164 || ALPHA_ALCOR || ALPHA_MIATA || ALPHA_LX164 || ALPHA_SX164 || ALPHA_NAUTILUS || ALPHA_NONAME
+	depends on TTY
+	default y if ALPHA_JENSEN || ALPHA_MIKASA || ALPHA_SABLE || ALPHA_LYNX || ALPHA_NORITAKE || ALPHA_DP264 || ALPHA_RAWHIDE || ALPHA_EIGER || ALPHA_WILDFIRE || ALPHA_TITAN || ALPHA_SHARK || ALPHA_MARVEL
+	---help---
+	  There are two different types of booting firmware on Alphas: SRM,
+	  which is command line driven, and ARC, which uses menus and arrow
+	  keys. Details about the Linux/Alpha booting process are contained in
+	  the Linux/Alpha FAQ, accessible on the WWW from
+	  <http://www.alphalinux.org/>.
+
+	  The usual way to load Linux on an Alpha machine is to use MILO
+	  (a bootloader that lets you pass command line parameters to the
+	  kernel just like lilo does for the x86 architecture) which can be
+	  loaded either from ARC or can be installed directly as a permanent
+	  firmware replacement from floppy (which requires changing a certain
+	  jumper on the motherboard). If you want to do either of these, say N
+	  here. If MILO doesn't work on your system (true for Jensen
+	  motherboards), you can bypass it altogether and boot Linux directly
+	  from an SRM console; say Y here in order to do that. Note that you
+	  won't be able to boot from an IDE disk using SRM.
+
+	  If unsure, say N.
+
+config EISA
+	bool
+	depends on ALPHA_GENERIC || ALPHA_JENSEN || ALPHA_ALCOR || ALPHA_MIKASA || ALPHA_SABLE || ALPHA_LYNX || ALPHA_NORITAKE || ALPHA_RAWHIDE
+	default y
+
+config ARCH_MAY_HAVE_PC_FDC
+	def_bool y
+
+config SMP
+	bool "Symmetric multi-processing support"
+	depends on ALPHA_SABLE || ALPHA_LYNX || ALPHA_RAWHIDE || ALPHA_DP264 || ALPHA_WILDFIRE || ALPHA_TITAN || ALPHA_GENERIC || ALPHA_SHARK || ALPHA_MARVEL
+	---help---
+	  This enables support for systems with more than one CPU. If you have
+	  a system with only one CPU, say N. If you have a system with more
+	  than one CPU, say Y.
+
+	  If you say N here, the kernel will run on uni- and multiprocessor
+	  machines, but will use only one CPU of a multiprocessor machine. If
+	  you say Y here, the kernel will run on many, but not all,
+	  uniprocessor machines. On a uniprocessor machine, the kernel
+	  will run faster if you say N here.
+
+	  See also the SMP-HOWTO available at
+	  <http://www.tldp.org/docs.html#howto>.
+
+	  If you don't know what to do here, say N.
+
+config HAVE_DEC_LOCK
+	bool
+	depends on SMP
+	default y
+
+config NR_CPUS
+	int "Maximum number of CPUs (2-32)"
+	range 2 32
+	depends on SMP
+	default "32" if ALPHA_GENERIC || ALPHA_MARVEL
+	default "4" if !ALPHA_GENERIC && !ALPHA_MARVEL
+	help
+	  MARVEL support can handle a maximum of 32 CPUs, all the others
+          with working support have a maximum of 4 CPUs.
+
+config ARCH_DISCONTIGMEM_ENABLE
+	bool "Discontiguous Memory Support"
+	help
+	  Say Y to support efficient handling of discontiguous physical memory,
+	  for architectures which are either NUMA (Non-Uniform Memory Access)
+	  or have huge holes in the physical address space for other reasons.
+	  See <file:Documentation/vm/numa> for more.
+
+source "mm/Kconfig"
+
+config NUMA
+	bool "NUMA Support (EXPERIMENTAL)"
+	depends on DISCONTIGMEM && BROKEN
+	help
+	  Say Y to compile the kernel to support NUMA (Non-Uniform Memory
+	  Access).  This option is for configuring high-end multiprocessor
+	  server machines.  If in doubt, say N.
+
+config ALPHA_WTINT
+	bool "Use WTINT" if ALPHA_SRM || ALPHA_GENERIC
+	default y if ALPHA_QEMU
+	default n if ALPHA_EV5 || ALPHA_EV56 || (ALPHA_EV4 && !ALPHA_LCA)
+	default n if !ALPHA_SRM && !ALPHA_GENERIC
+	default y if SMP
+	---help---
+	  The Wait for Interrupt (WTINT) PALcall attempts to place the CPU
+	  to sleep until the next interrupt.  This may reduce the power
+	  consumed, and the heat produced by the computer.  However, it has
+	  the side effect of making the cycle counter unreliable as a timing
+	  device across the sleep.
+
+	  For emulation under QEMU, definitely say Y here, as we have other
+	  mechanisms for measuring time than the cycle counter.
+
+	  For EV4 (but not LCA), EV5 and EV56 systems, or for systems running
+	  MILO, sleep mode is not supported so you might as well say N here.
+
+	  For SMP systems we cannot use the cycle counter for timing anyway,
+	  so you might as well say Y here.
+
+	  If unsure, say N.
+
+config NODES_SHIFT
+	int
+	default "7"
+	depends on NEED_MULTIPLE_NODES
+
+# LARGE_VMALLOC is racy, if you *really* need it then fix it first
+config ALPHA_LARGE_VMALLOC
+	bool
+	---help---
+	  Process creation and other aspects of virtual memory management can
+	  be streamlined if we restrict the kernel to one PGD for all vmalloc
+	  allocations.  This equates to about 8GB.
+
+	  Under normal circumstances, this is so far and above what is needed
+	  as to be laughable.  However, there are certain applications (such
+	  as benchmark-grade in-kernel web serving) that can make use of as
+	  much vmalloc space as is available.
+
+	  Say N unless you know you need gobs and gobs of vmalloc space.
+
+config VERBOSE_MCHECK
+	bool "Verbose Machine Checks"
+
+config VERBOSE_MCHECK_ON
+	int "Verbose Printing Mode (0=off, 1=on, 2=all)"
+	depends on VERBOSE_MCHECK
+	default 1
+	---help---
+	  This option allows the default printing mode to be set, and then
+	  possibly overridden by a boot command argument.
+
+	  For example, if one wanted the option of printing verbose
+	  machine checks, but wanted the default to be as if verbose
+	  machine check printing was turned off, then one would choose
+	  the printing mode to be 0. Then, upon reboot, one could add
+	  the boot command line "verbose_mcheck=1" to get the normal
+	  verbose machine check printing, or "verbose_mcheck=2" to get
+	  the maximum information available.
+
+	  Take the default (1) unless you want more control or more info.
+
+choice
+	prompt "Timer interrupt frequency (HZ)?"
+	default HZ_128 if ALPHA_QEMU
+	default HZ_1200 if ALPHA_RAWHIDE
+	default HZ_1024
+	---help---
+	  The frequency at which timer interrupts occur.  A high frequency
+	  minimizes latency, whereas a low frequency minimizes overhead of
+	  process accounting.  The later effect is especially significant
+	  when being run under QEMU.
+
+	  Note that some Alpha hardware cannot change the interrupt frequency
+	  of the timer.  If unsure, say 1024 (or 1200 for Rawhide).
+
+	config HZ_32
+		bool "32 Hz"
+	config HZ_64
+		bool "64 Hz"
+	config HZ_128
+		bool "128 Hz"
+	config HZ_256
+		bool "256 Hz"
+	config HZ_1024
+		bool "1024 Hz"
+	config HZ_1200
+		bool "1200 Hz"
+endchoice
+
+config HZ
+	int 
+	default 32 if HZ_32
+	default 64 if HZ_64
+	default 128 if HZ_128
+	default 256 if HZ_256
+	default 1200 if HZ_1200
+	default 1024
+
+source "drivers/pci/Kconfig"
+source "drivers/eisa/Kconfig"
+
+source "drivers/pcmcia/Kconfig"
+
+config SRM_ENV
+	tristate "SRM environment through procfs"
+	depends on PROC_FS
+	---help---
+	  If you enable this option, a subdirectory inside /proc called
+	  /proc/srm_environment will give you access to the all important
+	  SRM environment variables (those which have a name) and also
+	  to all others (by their internal number).
+
+	  SRM is something like a BIOS for Alpha machines. There are some
+	  other such BIOSes, like AlphaBIOS, which this driver cannot
+	  support (hey, that's not SRM!).
+
+	  Despite the fact that this driver doesn't work on all Alphas (but
+	  only on those which have SRM as their firmware), it's save to
+	  build it even if your particular machine doesn't know about SRM
+	  (or if you intend to compile a generic kernel). It will simply
+	  not create those subdirectory in /proc (and give you some warning,
+	  of course).
+
+	  This driver is also available as a module and will be called
+	  srm_env then.
+
+source "fs/Kconfig.binfmt"
+
+endmenu
+
+source "net/Kconfig"
+
+source "drivers/Kconfig"
+
+source "fs/Kconfig"
+
+source "arch/alpha/Kconfig.debug"
+
+# DUMMY_CONSOLE may be defined in drivers/video/console/Kconfig
+# but we also need it if VGA_HOSE is set
+config DUMMY_CONSOLE
+	bool
+	depends on VGA_HOSE
+	default y
+
+source "security/Kconfig"
+
+source "crypto/Kconfig"
+
+source "lib/Kconfig"
+
