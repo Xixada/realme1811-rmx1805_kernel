@@ -1,1 +1,0 @@
-# realme1811-rmx1805_kernel
